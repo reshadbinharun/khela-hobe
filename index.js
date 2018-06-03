@@ -14,8 +14,17 @@ const client = new Client({
   });
 client.connect();
 
-//SCHEDULER
+var weather = require('node-openweather')({
+  key: "1330048a0ee49d7901ca01f7432498e4", //set as process.env variable using heroku config:set weather_api = ...                             
+  accuracy: "like",
+  unit: "metric",
+
+    language: "en"
+});
+
+// ***** SCHEDULER ******
 //send an email every Thu, Fri, Sat @ 3pm
+
 var rule = new schedule.RecurrenceRule();
 rule.dayOfWeek = [4, new schedule.Range(5, 6)];
 rule.hour = 15; //@3pm
@@ -35,7 +44,6 @@ var j = schedule.scheduleJob(rule, function(){
                         //sendgrid email test                                                                                                  
                 }
         });
-  /*
   for (var i =0; i < cities.size();i++){
   	var emails = [];
   	query_email = 'select email from khela where city='+cities[i];
@@ -43,11 +51,11 @@ var j = schedule.scheduleJob(rule, function(){
   		var mail_html = "... form with option to attend ... /agree ... if 6 agree, send email!";
   		//send mail to each mail address from /agree route
   	}
-  }*/
+  }
 });
 
-
 //SCHEDULER TEST NOW
+
 var city_list = [];
 var query_cities = 'select distinct city from khela;';
   client.query(query_cities, (err_c, res_c) => {
@@ -57,19 +65,35 @@ var query_cities = 'select distinct city from khela;';
                         //console.log(res_c.rows);
                         //sendgrid email test
                         cities = res_c.rows;
-                        for (var i = 0; i < cities.length; i++){
+                        /*for (var i = 0; i < cities.length; i++){
                           //console.log(cities[i].city);
+                          console.log("The city "+String(cities[i].city)+"is being pushed into cities array");
+                          //the cities[i].city returns the correct city but city_list[k] does not!
                           city_list.push(cities[i].city);
-                        }
-                        for (var k =0; k < city_list.length; k++){
-                          var query_em = 'select email from khela where city='+'\''+city_list[k]+'\'';
+                        }*/
+                        console.log(cities[1].city);
+                        console.log(cities.length);
+                        for (var k = 0; k < cities.length; k++){
+
+                          var query_em = 'select email from khela where city='+'\''+cities[k].city+'\'';
                           client.query(query_em, (err_e, res_e) => {
                             if (err_e) {
                               console.log(err_e.stack)
                             } else {
+                              //console.log(cities[k].city);
+                              //console.log("The following is an email from city "+ cities[k].city);//asynchronous issue
                               console.log(res_e.rows[0].email);
                             //sendgrid email test
                             var email = res_e.rows[0].email;
+
+                            //send email if weather is good in city
+                            weather.city('medford').now().then(function(res) {
+                            //success logic                                                                                                                              
+                            console.log('weather api works!');
+                            console.log(res);
+                          }).catch(function(err) {
+                            //error handling                                                                                                                             
+                          });
                                                                                                                             
                             }
                           }); 
@@ -80,32 +104,26 @@ var query_cities = 'select distinct city from khela;';
 
 //scheduler
 
-//EMAIL                                                                                                                                        
+//******* EMAIL ******                                                                                                                                        
 //THIS WORKS!
 /*
 const sgMail = require('@sendgrid/mail');                                                                                                      
 sgMail.setApiKey('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');                                                                                                          
 const msg = {                                                                                                                                  
-  to: 'reshadbinharun@gmail.com',                                                                                                              
-  from: 'exampley@test.org',                                                                                                                  
-  subject: 'Hello world',                                                                                                                      
-  text: 'Hello!',                                                                                                                  
-  html: '<p>Hello HTML world!</p>',                                                                                                            
+  to: 'solim.khan902@gmail.com',                                                                                                              
+  from: 'definitelyTheFuture@futre.saveusall',                                                                                                                  
+  subject: 'MISSION IMPOSSIBLE',                                                                                                                      
+  text: 'This is a message from the future. Reshad becomes evil and must be stopped! Are you upto the task?',                                                                                                                  
+  html: '<p>would recommend 10/10!</p>',                                                                                                            
 };                                                                                                                                             
 sgMail.send(msg); 
 */
 
 
-//weather api 
-/*                                                                                                                                 
-var weather = require('node-openweather')({
-  key: "1330048a0ee49d7901ca01f7432498e4", //set as process.env variable using heroku config:set weather_api = ...                             
-  accuracy: "like",
-  unit: "metric",
+//****** WEATHER ****** 
+                                                                                                                                 
 
-    language: "en"
-});
-
+/*
 //EXAMPLE CALL WEATHER API                                                                                                                     
 weather.city('London').now().then(function(res) {
   //success logic                                                                                                                              
@@ -119,6 +137,7 @@ weather.city('London').now().then(function(res) {
 
 app.get('/', function (req, res) {
   res.sendFile(path.join(__dirname + '/public/index.html'));
+
 });
 
 
@@ -144,6 +163,9 @@ app.post('/store', function (req, res){
 });
 
 app.listen(process.env.PORT || 3000);
+
+
+//TRIAL CODE BELOW
 
 /*                                                                                                                                             
 const sgMail = require('@sendgrid/mail');                                                                                                      

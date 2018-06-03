@@ -1,18 +1,38 @@
 
 <!DOCTYPE html>
+<html lang="en">
 <html>
 	<head>
 		<title> Khela Hobe? </title>
 		<meta charset = "utf-8" />
-		<meta name = "viewport" content = "initial-scale=1.0, user-scalable=no" />
-		<link rel="stylesheet" href="style.css" type="text/css" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+		<link rel="stylesheet"
+          href="https://fonts.googleapis.com/css?family=Roboto|Montserrat">
+    <style>
+      body {
+        font-family: 'Roboto', serif;
+        font-size: 12px;
+        background-color: #FBFEF9;
+      }
+      #txt{
+      	text-align: center;
+      	font-family: 'Montserrat', serif;
+      	font-size: 20px;
+      	text-shadow: 2px 2px lightgray;
+      }
+      #form1{
+      	font-size: 14px;
+      }
+    </style>
 	</head>
 	<body>
-		<img id = "logo" src = "logo.png" alt = "logo"/>
-		<h2> Welcome! Tired of no-shows for your pick up games? </h2>
-		<h2> You've come to the right place!</h2>
-		<form method="post" action="/store" >
-		  	<p>Please provide the following details</p>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+		<script src="js/scripts.js"></script>
+		<center><img src = "logo.png" alt = "logo" align = "middle"/></center>
+		<h2 id = "txt" > Welcome! Tired of no-shows for your pick up games? </h2>
+		<h2 id = "txt" > You've come to the right place!</h2>
+		<form align = "center" method="post" action="/store" >
+		  	<p id="form1">Please provide the following details</p>
 		  	<p>Name?</p>
 		  <input type="text" name="name">
 		  <p>City?</p>
