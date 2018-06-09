@@ -226,71 +226,74 @@ app.post('/cityTest', function (req, res){
 
 
 //chainging order: check weather with city, if weather good, query database and send email!
+//one way to handle this would be to create new promise if weather is good: see commented out code below!
 app.post('/cityWeatherTest', function (req, res){
   var city = req.body.city;
+  var good_weather = false;
+  var temp;
+  var emails = [];
+  var emails_raw;
+  var T;
+  var resp = "Done Testing!";
     var promise = new Promise(function(resolve, reject) {
-        weather.city(city).now().then(function(res_w) {
+      //check weather in city, update good weather bool
+      weather.city(city).now().then(function(res_w) {
           //success logic                                                                                                                              
           console.log('weather api works!');
+          console.log(res_w.main.temp);
+          resolve(res_w);
         }).catch(function(err_w) {
           //error handling                                                                                                                             
-        });
-        var weather_good = false;
-        var temp = Number(res_w.main.temp);
-        if (temp > 290 && temp < 300){
-          console.log("Temperature is" + temp);
-          weather_good = true;
-        }
-        else{
-          weather_good = false;
-        }
-        
-    }).then(function() {
-      var emails = [];
-        //IF WEATHER GOOD
-        if (weather_good){
-          var query_ins = 'select email from khela where city=\''+city+'\'';
-          console.log(query_ins);
-            client.query(query_ins, (err1, res1) => {
-              console.log("Making SQL query!");
-                    if (err1) {
-                      reject(err1);
-                            //console.log(err1.stack)
-                    } else {
-                      //console.log(res1.rows[0]);
-                      resolve(res1);
-                      for(var i = 0; i < res1.rows.length; i++){
-                        var temp = res1.rows[i].email;
-                        temp = temp.replace(/\s/g, '');
-                        emails.push({
-                          email:temp
-                        });
-                        console.log(emails[i].email);
-                      }                                                                                                
-                    }
-                  }).then(function(){
-                    console.log("sending emails");
-                    const sgMail = require('@sendgrid/mail');                                                                                                      
-                    sgMail.setApiKey('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');                                                                                                          
-                    const msg = {                                                                                                                                  
-                      to: emails, //parse emails and separate                                                                                                             
-                      from: 'khelahobe@reshadisking.money',                                                                                                                  
-                      subject: 'Testing for Khela Hobe!',                                                                                                                      
-                      text: 'Test message',                                                                                                                  
-                      html: '<p>This is a test messge to test Reshad\'s app! Thank you for participating...</p>',                                                                                                            
-                    };                                                                                                                                             
-                    sgMail.send(msg); 
-                  });
-          } else{
-            res.send("There was no report of good weather!")
+        });   
+    }).then(function(res_w){
+          T = Number(res_w.main.temp);
+          if (T < 300 && T > 280) good_weather = true;
+          console.log("temp has been updated to " + T + "K and the bool is " + good_weather + " !");
+          if (good_weather){
+            var prom1 = new Promise(function(resolve, reject){
+              var query_ins = 'select email from khela where city=\''+city+'\'';
+                console.log(query_ins);
+                client.query(query_ins, (err1, res1) => {
+                console.log("in client query");
+                        if (err1) {
+                          console.log(err1);
+                                //console.log(err1.stack)
+                        } else {
+                          console.log("successfully fetched emails");
+                          emails_raw = res1;
+                          resolve(emails_raw);                                                                                                
+                        }
+                }); 
+            }).then(function(emails_raw){
+                console.log(emails_raw);
+                console.log("forming email JSON object");
+                for(var i = 0; i < emails_raw.rows.length; i++){
+                    var temp = emails_raw.rows[i].email;
+                    temp = temp.replace(/\s/g, '');
+                    emails.push({
+                      email:temp
+                    });
+                    console.log(emails[i].email);
+                  }
+            }).then(function(){
+              //SEND EMAILS
+              console.log("about to send emails");
+              const sgMail = require('@sendgrid/mail');                                                                                                      
+              sgMail.setApiKey('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');                                                                                                          
+              const msg = {                                                                                                                                  
+                to: emails, //parse emails and separate                                                                                                             
+                from: 'khelahobe@reshadisking.money',                                                                                                                  
+                subject: 'Testing for Khela Hobe!',                                                                                                                      
+                text: 'Test message',                                                                                                                  
+                html: '<p>This is a test messge to test Reshad\'s app! Thank you for participating...</p>',                                                                                                            
+              };                                                                                                                                             
+              sgMail.send(msg); 
+          });
+          }else{
+            resp = "Sorry the temperature is " + T + " K, so we recommend not playing :(";
           }
-      }, function(err){
-        console.log(err);
-      });
-  //TESTING OUT PROMISE CHAINING
-
-
-  res.send('Testing Done for weather and email!')
+    });
+    res.send(resp);
 });
 
 app.listen(process.env.PORT || 3000);
